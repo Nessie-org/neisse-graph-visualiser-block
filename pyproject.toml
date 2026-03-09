@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "my-plugin"
+version = "0.1.0"
+description = "My Nessie Plugin"
+requires-python = ">=3.9"
+dependencies = [
+    "nessie-api @ git+https://github.com/Nessie-org/nessie-api.git",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/my_plugin"]
