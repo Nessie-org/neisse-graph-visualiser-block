@@ -12,4 +12,4 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/my_plugin"]
+packages = ["src/neisse-graph-visualiser-blocks"]
