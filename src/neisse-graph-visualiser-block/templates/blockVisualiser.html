@@ -1,0 +1,96 @@
+<svg id="main_view" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6"
+            refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <g id="edges"></g>
+  <g id="nodes"></g>
+</svg>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const GRAPH_DATA = __GRAPH_DATA__;
+
+const layerNodes = d3.select("#nodes");
+const layerEdges = d3.select("#edges");
+
+const ROW_H = 20;
+const PADDING = 12;
+
+const nodeMap = {};
+
+const nodeGroups = layerNodes.selectAll(".node")
+  .data(GRAPH_DATA.nodes)
+  .join("g")
+  .attr("class","node")
+  .attr("transform", d => `translate(${d.x},${d.y})`);
+
+nodeGroups.each(function(d) {
+  const g = d3.select(this);
+  const attrs = Object.entries(d.attributes || {});
+  const texts = [];
+
+  const header = g.append("text")
+    .attr("font-size","13px")
+    .attr("font-weight","bold")
+    .attr("font-family","monospace")
+    .attr("fill","#ffffff")
+    .text(d.id);
+  texts.push(header);
+
+  attrs.forEach(([k,v]) => {
+    const t = g.append("text")
+      .attr("font-size","11px")
+      .attr("font-family","monospace")
+      .text(`${k}: ${v}`);
+    texts.push(t);
+  });
+
+  let maxWidth = 0;
+  texts.forEach(t => {
+    const w = t.node().getBBox().width;
+    if (w > maxWidth) maxWidth = w;
+  });
+
+  const width = maxWidth + PADDING*2;
+  const height = texts.length * ROW_H + PADDING*1.5;
+
+  d.width = width;
+  d.height = height;
+
+  g.insert("rect",":first-child")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("rx",4)
+    .attr("fill","#1e2130")
+    .attr("stroke","#3b82f6")
+    .attr("stroke-width",1.5);
+
+  g.insert("rect","text")
+    .attr("width", width)
+    .attr("height", ROW_H+6)
+    .attr("fill","#3b82f6");
+
+  texts.forEach((t,i) => {
+    t.attr("x", PADDING)
+     .attr("y", ROW_H + i*ROW_H);
+  });
+
+  nodeMap[d.id] = d;
+});
+
+layerEdges.selectAll(".edge")
+  .data(GRAPH_DATA.edges)
+  .join("line")
+  .attr("class","edge")
+  .attr("stroke","#475569")
+  .attr("stroke-width",1.5)
+  .attr("marker-end","url(#arrowhead)")
+  .attr("x1", d => nodeMap[d.source].x + nodeMap[d.source].width/2)
+  .attr("y1", d => nodeMap[d.source].y + nodeMap[d.source].height/2)
+  .attr("x2", d => nodeMap[d.target].x + nodeMap[d.target].width/2)
+  .attr("y2", d => nodeMap[d.target].y + nodeMap[d.target].height/2);
+</script>
