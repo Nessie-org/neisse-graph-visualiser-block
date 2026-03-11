@@ -15,7 +15,10 @@ def visualise_graph_handler(action: Action):
     with open(TEMPLATE_PATH, "r") as f:
         template = f.read()
     graph_json = json.dumps(graph_dict)
+    graph_name = graph_dict["name"].replace(" ", "-").lower()
     html_content = template.replace("__GRAPH_DATA__", graph_json)
+    html_content = html_content.replace("__GRAPH_NAME__", graph_name)
+
     return html_content
 
 
@@ -41,12 +44,16 @@ if __name__ == "__main__":
     graph = Graph("Test Graph")
     node_a = Node("A", attributes={"label": Attribute("label", "Node A")})
     node_b = Node("B", attributes={"label": Attribute("label", "Node B")})
+    node_c = Node("C", attributes={"label": Attribute("label", "Node C")})
     graph.add_node(node_a)
     graph.add_node(node_b)
+    graph.add_node(node_c)
     graph.add_edge(Edge("edge2",source=node_a, target=node_b))
+    graph.add_edge(Edge("edge3",source=node_b, target=node_c))
 
     action = Action(name="visualise_graph", payload=graph)
     result = plugin_instance.handle(action)
+    graph_name = graph.name.replace(" ", "-").lower()
     #The result is svg context that is here going to be added to html block and saved as html file
     html_content =    """
     <!DOCTYPE html>
@@ -62,12 +69,10 @@ if __name__ == "__main__":
         """ + result + """ 
         </div>
 <script>
-
-
 (function initPhysics() {
 
   function boot() {
-    const svgEl = document.querySelector('#graph-container svg');
+    const svgEl = document.querySelector('#main_view-__GRAPH_NAME__');
     if (!svgEl || typeof d3 === 'undefined') return;
 
     const W = window.innerWidth  || 900;
@@ -79,7 +84,7 @@ if __name__ == "__main__":
     }
 
     const badge = document.createElement('div');
-    badge.id = '_zb';
+    badge.id = '_zb-__GRAPH_NAME__';
     Object.assign(badge.style, {
       position:      'absolute',
       bottom:        '14px',
@@ -106,24 +111,23 @@ if __name__ == "__main__":
       clearTimeout(badgeTimer);
       badgeTimer = setTimeout(() => badge.style.opacity = '0', 1200);
     }
-let currentTransform = d3.zoomIdentity;
 
-const zoom = d3.zoom()
-  .scaleExtent([0.1, 5])
-  .filter(event => {
-    // Zoom on wheel, but only pan if NOT dragging a node
-    if (event.type === 'wheel') return true;
-    return !event.target.closest('[node]');
-  })
-  .on('zoom', event => {
-    currentTransform = event.transform;
-    // Apply transform to the GROUPS, not the SVG itself
-    d3.select('#nodes').attr('transform', event.transform);
-    d3.select('#edges').attr('transform', event.transform);
-    showBadge(Math.round(event.transform.k * 100) + '%');
-  });
+    let currentTransform = d3.zoomIdentity;
 
-d3.select(svgEl).call(zoom).on('dblclick.zoom', null);
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 5])
+      .filter(event => {
+        if (event.type === 'wheel') return true;
+        return !event.target.closest('[node]');
+      })
+      .on('zoom', event => {
+        currentTransform = event.transform;
+        d3.select('#nodes-__GRAPH_NAME__').attr('transform', event.transform);
+        d3.select('#edges-__GRAPH_NAME__').attr('transform', event.transform);
+        showBadge(Math.round(event.transform.k * 100) + '%');
+      });
+
+    d3.select(svgEl).call(zoom).on('dblclick.zoom', null);
 
     const nodeEls = Array.from(svgEl.querySelectorAll('[node]'));
     if (!nodeEls.length) {
@@ -159,7 +163,6 @@ d3.select(svgEl).call(zoom).on('dblclick.zoom', null);
         return { el, tag, x, y, w, h };
       }
 
-      /* rect, image, or anything else */
       const x = parseFloat(el.getAttribute('x') || 0);
       const y = parseFloat(el.getAttribute('y') || 0);
       const w = parseFloat(el.getAttribute('width')  || 20);
@@ -230,7 +233,6 @@ d3.select(svgEl).call(zoom).on('dblclick.zoom', null);
       });
 
       links.forEach(({ el, source: s, target: t }) => {
-        /* after forceLink init, source/target are node objects, not indices */
         const { x1, y1, x2, y2 } = edgeEndpoints(s, t);
         el.setAttribute('x1', x1); el.setAttribute('y1', y1);
         el.setAttribute('x2', x2); el.setAttribute('y2', y2);
@@ -285,6 +287,7 @@ d3.select(svgEl).call(zoom).on('dblclick.zoom', null);
 </body>
 </html>
     """
+    html_content = html_content.replace("__GRAPH_NAME__", graph_name)
     with open("graph_visualisation.html", "w") as f:
         f.write(html_content)
     
