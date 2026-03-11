@@ -20,28 +20,33 @@ def visualise_graph_handler(action: Action):
 
 
 
-@plugin(name="Neisse_graph_visualiser_block")
+@plugin(name="Visualiser Block", verbose=False)
 def neisse_graph_visualiser_block_plugin():
     handlers = {
         "visualise_graph": visualise_graph_handler,
     }
     requires = []
-    return handlers, requires
+    setup_requires = {}
+
+    ret_dict = {
+        "handlers": handlers,
+        "requires": requires,
+        "setup_requires": setup_requires,
+    }
+    return ret_dict
 
 if __name__ == "__main__": 
     plugin_instance = neisse_graph_visualiser_block_plugin()
     print(f"Plugin '{plugin_instance.name}' initialized with actions: {plugin_instance.provided_actions}")
-    graph = Graph()
+    graph = Graph("Test Graph")
     node_a = Node("A", attributes={"label": Attribute("label", "Node A")})
     node_b = Node("B", attributes={"label": Attribute("label", "Node B")})
     graph.add_node(node_a)
     graph.add_node(node_b)
     graph.add_edge(Edge("edge2",source=node_a, target=node_b))
-    
+
     action = Action(name="visualise_graph", payload=graph)
     result = plugin_instance.handle(action)
-    print(result)
-    result = visualise_graph_handler(action)
     #The result is svg context that is here going to be added to html block and saved as html file
     html_content =    """
     <!DOCTYPE html>
