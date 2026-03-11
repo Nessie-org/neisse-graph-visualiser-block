@@ -62,7 +62,7 @@ if __name__ == "__main__":
 (function initPhysics() {
 
   function boot() {
-    const svgEl = document.getElementById('main_view');
+    const svgEl = document.querySelector('#graph-container svg');
     if (!svgEl || typeof d3 === 'undefined') return;
 
     const W = window.innerWidth  || 900;
