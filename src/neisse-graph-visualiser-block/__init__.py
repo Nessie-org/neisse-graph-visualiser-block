@@ -20,7 +20,7 @@ def visualise_graph_handler(action: Action):
 
 
 
-@plugin(name="Neisse_graph_visualiser_block", verbose=False)
+@plugin(name="Visualiser Block", verbose=False)
 def neisse_graph_visualiser_block_plugin():
     handlers = {
         "visualise_graph": visualise_graph_handler,
