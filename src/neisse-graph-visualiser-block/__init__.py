@@ -17,7 +17,6 @@ def visualise_graph_handler(action: Action):
     graph_json = json.dumps(graph_dict)
     graph_name = graph_dict["name"].replace(" ", "-").lower()
     html_content = template.replace("__GRAPH_DATA__", graph_json)
-    html_content = html_content.replace("__GRAPH_NAME__", graph_name)
 
     return html_content
 
@@ -72,7 +71,7 @@ if __name__ == "__main__":
 (function initPhysics() {
 
   function boot() {
-    const svgEl = document.querySelector('#main_view-__GRAPH_NAME__');
+    const svgEl = document.querySelector('#main_view');
     if (!svgEl || typeof d3 === 'undefined') return;
 
     const W = window.innerWidth  || 900;
@@ -84,7 +83,7 @@ if __name__ == "__main__":
     }
 
     const badge = document.createElement('div');
-    badge.id = '_zb-__GRAPH_NAME__';
+    badge.id = '_zb';
     Object.assign(badge.style, {
       position:      'absolute',
       bottom:        '14px',
@@ -122,8 +121,8 @@ if __name__ == "__main__":
       })
       .on('zoom', event => {
         currentTransform = event.transform;
-        d3.select('#nodes-__GRAPH_NAME__').attr('transform', event.transform);
-        d3.select('#edges-__GRAPH_NAME__').attr('transform', event.transform);
+        d3.select('#nodes').attr('transform', event.transform);
+        d3.select('#edges').attr('transform', event.transform);
         showBadge(Math.round(event.transform.k * 100) + '%');
       });
 
