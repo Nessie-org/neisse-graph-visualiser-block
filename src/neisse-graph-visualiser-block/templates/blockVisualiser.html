@@ -1,12 +1,12 @@
-<svg id="main_view-__GRAPH_NAME__" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+<svg id="main_view" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
   <defs>
-    <marker id="arrowhead-__GRAPH_NAME__" markerWidth="8" markerHeight="6"
+    <marker id="arrowhead" markerWidth="8" markerHeight="6"
       refX="8" refY="3" orient="auto">
       <polygon points="0 0, 8 3, 0 6" fill="#475569"/>
     </marker>
   </defs>
-  <g id="edges-__GRAPH_NAME__"></g>
-  <g id="nodes-__GRAPH_NAME__"></g>
+  <g id="edges"></g>
+  <g id="nodes"></g>
 </svg>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
@@ -19,8 +19,8 @@ const PADDING = 12;
 const W       = window.innerWidth  || 0;
 const H       = window.innerHeight || 0;
 
-const layerEdges = d3.select('#edges-__GRAPH_NAME__');
-const layerNodes = d3.select('#nodes-__GRAPH_NAME__');
+const layerEdges = d3.select('#edges');
+const layerNodes = d3.select('#nodes');
 const nodeMap    = {};
 
 /* give each node a random start position */
@@ -34,7 +34,7 @@ const nodeGroups = layerNodes.selectAll('.node')
   .data(GRAPH_DATA.nodes)
   .join('g')
   .attr('class',     'node')
-  .attr('node',      '')            /* CONTRACT: physics finds nodes by this */
+  .attr('node',      '')            
   .attr('transform', d => `translate(${d.x},${d.y})`);
 
 nodeGroups.each(function(d) {
@@ -100,10 +100,11 @@ GRAPH_DATA.nodes.forEach((n, i) => { nodeIndex[n.id] = i; });
 layerEdges.selectAll('.edge')
   .data(GRAPH_DATA.edges)
   .join('line')
-  .attr('class',        'edge')
+  .attr('edge', '')
+  .attr('class','edge')
   .attr('stroke',       '#475569')
   .attr('stroke-width', 1.5)
-  .attr('marker-end',   'url(#arrowhead-__GRAPH_NAME__)')
+  .attr('marker-end',   'url(#arrowhead)')
   .attr('data-source',  d => nodeIndex[d.source])  
   .attr('data-target',  d => nodeIndex[d.target])  
   .attr('x1', d => nodeMap[d.source].x + nodeMap[d.source].width  / 2)

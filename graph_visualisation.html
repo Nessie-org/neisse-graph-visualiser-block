@@ -1,60 +1,4 @@
-from nessie_api.models import Plugin, Action, plugin , Graph, Node, Edge, Attribute
-import json
-import os
 
-
-
-def visualise_graph_handler(action: Action):
-    graph_data = action.payload
-    #Ensure the payload has to_dict method, which is expected for Graph objects
-    if not hasattr(graph_data, "to_dict") or not callable(getattr(graph_data, "to_dict")):
-        print("Invalid graph data provided.")
-        raise ValueError("Expected a Graph object as payload.")
-    graph_dict = graph_data.to_dict()
-    TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "templates", "blockVisualiser.html")
-    with open(TEMPLATE_PATH, "r") as f:
-        template = f.read()
-    graph_json = json.dumps(graph_dict)
-    graph_name = graph_dict["name"].replace(" ", "-").lower()
-    html_content = template.replace("__GRAPH_DATA__", graph_json)
-
-    return html_content
-
-
-
-@plugin(name="Visualiser Block", verbose=False)
-def neisse_graph_visualiser_block_plugin():
-    handlers = {
-        "visualise_graph": visualise_graph_handler,
-    }
-    requires = []
-    setup_requires = {}
-
-    ret_dict = {
-        "handlers": handlers,
-        "requires": requires,
-        "setup_requires": setup_requires,
-    }
-    return ret_dict
-
-if __name__ == "__main__": 
-    plugin_instance = neisse_graph_visualiser_block_plugin()
-    print(f"Plugin '{plugin_instance.name}' initialized with actions: {plugin_instance.provided_actions}")
-    graph = Graph("Test Graph")
-    node_a = Node("A", attributes={"label": Attribute("label", "Node A")})
-    node_b = Node("B", attributes={"label": Attribute("label", "Node B")})
-    node_c = Node("C", attributes={"label": Attribute("label", "Node C")})
-    graph.add_node(node_a)
-    graph.add_node(node_b)
-    graph.add_node(node_c)
-    graph.add_edge(Edge("edge2",source=node_a, target=node_b))
-    graph.add_edge(Edge("edge3",source=node_b, target=node_c))
-
-    action = Action(name="visualise_graph", payload=graph)
-    result = plugin_instance.handle(action)
-    graph_name = graph.name.replace(" ", "-").lower()
-    #The result is svg context that is here going to be added to html block and saved as html file
-    html_content =    """
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -65,7 +9,120 @@ if __name__ == "__main__":
     </head>
     <body>
     <div id="graph-container" style="width: 100%; height: 100vh; overflow: hidden;">
-        """ + result + """ 
+        <svg id="main_view" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6"
+      refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#475569"/>
+    </marker>
+  </defs>
+  <g id="edges"></g>
+  <g id="nodes"></g>
+</svg>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+<script>
+const GRAPH_DATA = {"name": "Test Graph", "type": "directed", "nodes": [{"id": "A", "attributes": {"label": "Node A"}}, {"id": "B", "attributes": {"label": "Node B"}}, {"id": "C", "attributes": {"label": "Node C"}}], "edges": [{"id": "edge2", "source": "A", "target": "B", "attributes": {}}, {"id": "edge3", "source": "B", "target": "C", "attributes": {}}]};
+
+const ROW_H   = 20;
+const PADDING = 12;
+const W       = window.innerWidth  || 0;
+const H       = window.innerHeight || 0;
+
+const layerEdges = d3.select('#edges');
+const layerNodes = d3.select('#nodes');
+const nodeMap    = {};
+
+/* give each node a random start position */
+GRAPH_DATA.nodes.forEach((n, i) => {
+  n.x = Math.random() * W * 0.7 + W * 0.1;
+  n.y = Math.random() * H * 0.7 + H * 0.1;
+});
+
+/* ── build node groups ───────────────────────────────────────────── */
+const nodeGroups = layerNodes.selectAll('.node')
+  .data(GRAPH_DATA.nodes)
+  .join('g')
+  .attr('class',     'node')
+  .attr('node',      '')            
+  .attr('transform', d => `translate(${d.x},${d.y})`);
+
+nodeGroups.each(function(d) {
+  const g     = d3.select(this);
+  const attrs = Object.entries(d.attributes || {});
+  const texts = [];
+
+  texts.push(
+    g.append('text')
+      .attr('font-size',   '13px')
+      .attr('font-weight', 'bold')
+      .attr('font-family', 'monospace')
+      .attr('fill',        '#ffffff')
+      .text(d.id)
+  );
+
+  attrs.forEach(([k, v]) => {
+    texts.push(
+      g.append('text')
+        .attr('font-size',   '11px')
+        .attr('font-family', 'monospace')
+        .attr('fill',        '#ffffff')
+        .text(`${k}: ${v}`)
+    );
+  });
+
+  let maxWidth = 0;
+  texts.forEach(t => {
+    const w = t.node().getBBox().width;
+    if (w > maxWidth) maxWidth = w;
+  });
+
+  const width  = maxWidth + PADDING * 2;
+  const height = texts.length * ROW_H + PADDING * 1.5;
+  d.width  = width;
+  d.height = height;
+
+  g.insert('rect', ':first-child')
+    .attr('width',        width)
+    .attr('height',       height)
+    .attr('rx',           4)
+    .attr('fill',         '#1e2130')
+    .attr('stroke',       '#3b82f6')
+    .attr('stroke-width', 1.5);
+
+  g.insert('rect', 'text')
+    .attr('width',  width)
+    .attr('height', ROW_H + 6)
+    .attr('rx',     4)
+    .attr('fill',   '#3b82f6');
+
+  texts.forEach((t, i) => {
+    t.attr('x', PADDING).attr('y', ROW_H + i * ROW_H);
+  });
+
+  nodeMap[d.id] = d;
+});
+
+
+const nodeIndex = {};
+GRAPH_DATA.nodes.forEach((n, i) => { nodeIndex[n.id] = i; });
+
+layerEdges.selectAll('.edge')
+  .data(GRAPH_DATA.edges)
+  .join('line')
+  .attr('edge', '')
+  .attr('class','edge')
+  .attr('stroke',       '#475569')
+  .attr('stroke-width', 1.5)
+  .attr('marker-end',   'url(#arrowhead)')
+  .attr('data-source',  d => nodeIndex[d.source])  
+  .attr('data-target',  d => nodeIndex[d.target])  
+  .attr('x1', d => nodeMap[d.source].x + nodeMap[d.source].width  / 2)
+  .attr('y1', d => nodeMap[d.source].y + nodeMap[d.source].height / 2)
+  .attr('x2', d => nodeMap[d.target].x + nodeMap[d.target].width  / 2)
+  .attr('y2', d => nodeMap[d.target].y + nodeMap[d.target].height / 2);
+</script> 
         </div>
 <script>
 (function initPhysics() {
@@ -285,8 +342,4 @@ if __name__ == "__main__":
 </script>
 </body>
 </html>
-    """
-    html_content = html_content.replace("__GRAPH_NAME__", graph_name)
-    with open("graph_visualisation.html", "w") as f:
-        f.write(html_content)
     
