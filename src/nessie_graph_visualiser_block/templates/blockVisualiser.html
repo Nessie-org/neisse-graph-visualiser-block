@@ -98,18 +98,18 @@ const nodeIndex = {};
 GRAPH_DATA.nodes.forEach((n, i) => { nodeIndex[n.id] = i; });
 
 let edges = layerEdges.selectAll('.edge')
-  .data(GRAPH_DATA.edges)
+.data(GRAPH_DATA.edges)
   .join('line')
-  .attr('edge',         '')
-  .attr('class',        'edge')
+  .attr('edge', '')
+  .attr('class','edge')
   .attr('stroke',       '#475569')
   .attr('stroke-width', 1.5)
-  .attr('data-source',  d => nodeIndex[d.source])
-  .attr('data-target',  d => nodeIndex[d.target])
-  .attr('x1', d => nodeMap[d.source].x)
-  .attr('y1', d => nodeMap[d.source].y)
-  .attr('x2', d => nodeMap[d.target].x)
-  .attr('y2', d => nodeMap[d.target].y);
+  .attr('data-source',  d => nodeIndex[d.source])  
+  .attr('data-target',  d => nodeIndex[d.target])  
+  .attr('x1', d => nodeMap[d.source].x + nodeMap[d.source].width  / 2)
+  .attr('y1', d => nodeMap[d.source].y + nodeMap[d.source].height / 2)
+  .attr('x2', d => nodeMap[d.target].x + nodeMap[d.target].width  / 2)
+  .attr('y2', d => nodeMap[d.target].y + nodeMap[d.target].height / 2);
   if(GRAPH_DATA.type === 'directed') {
     edges.attr('marker-end', 'url(#arrowhead)');
   }
