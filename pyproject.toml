@@ -3,15 +3,18 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "my-plugin"
+name = "nessie-block-visualiser"
 version = "0.1.0"
-description = "My Nessie Plugin"
+description = "A plugin for visualising graph as blocks with all attributes."
 requires-python = ">=3.9"
 dependencies = [
-    "nessie-api @ git+https://github.com/Nessie-org/nessie-api.git",
+    "nessie-api>=0.1.0",
 ]
 [tool.hatch.metadata]
 allow-direct-references = true  
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/neisse-graph-visualiser-blocks"]
+packages = ["src/nessie_graph_visualiser_block"]
+
+[project.entry-points."nessie_plugins"]
+nessie_block_visualiser = "nessie_graph_visualiser_block:nessie_graph_visualiser_block_plugin"

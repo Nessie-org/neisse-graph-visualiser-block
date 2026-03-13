@@ -4,7 +4,7 @@ import os
 
 
 
-def visualise_graph_handler(action: Action):
+def visualise_graph_handler(action: Action, context) -> str:
     graph_data = action.payload
     #Ensure the payload has to_dict method, which is expected for Graph objects
     if not hasattr(graph_data, "to_dict") or not callable(getattr(graph_data, "to_dict")):
@@ -23,7 +23,7 @@ def visualise_graph_handler(action: Action):
 
 
 @plugin(name="Visualiser Block", verbose=False)
-def neisse_graph_visualiser_block_plugin():
+def nessie_graph_visualiser_block_plugin():
     handlers = {
         "visualise_graph": visualise_graph_handler,
     }
@@ -38,7 +38,7 @@ def neisse_graph_visualiser_block_plugin():
     return ret_dict
 
 if __name__ == "__main__": 
-    plugin_instance = neisse_graph_visualiser_block_plugin()
+    plugin_instance = nessie_graph_visualiser_block_plugin()
     print(f"Plugin '{plugin_instance.name}' initialized with actions: {plugin_instance.provided_actions}")
     graph = Graph("Test Graph")
     node_a = Node("A", attributes={"label": Attribute("label", "Node A")})
